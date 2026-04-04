@@ -213,44 +213,46 @@ bool HLTGenericFilter<T1>::hltFilter(edm::Event& iEvent,
     cutOverE2EB_ = thrOverE2EB_.at(iEn);
     cutOverE2EE_ = thrOverE2EE_.at(iEn);
 
+    // Per region: if thrOverE > 0, bound = (thrRegular >= 0 ? thrRegular : 0) + thrOverE * energy
+    // (linear in energy; thrRegular < 0 e.g. -1 => no offset, pure vali/E cap as for muon isolation).
+    // If thrOverE <= 0, only the constant thrRegular cut applies for that tier. Optional OR with x/E^2.
+    const bool eb = std::abs(EtaSC) < 1.479;
+    const double cutReg = eb ? cutRegularEB_ : cutRegularEE_;
+    const double cutOvE = eb ? cutOverEEB_ : cutOverEEE_;
+    const double cutOvE2 = eb ? cutOverE2EB_ : cutOverE2EE_;
+
+    bool pass = false;
     if (lessThan_) {
-      if ((std::abs(EtaSC) < 1.479 && vali <= cutRegularEB_) || (std::abs(EtaSC) >= 1.479 && vali <= cutRegularEE_)) {
-        n++;
-        filterproduct.addObject(trigger_type, ref);
-        continue;
+      if (cutOvE > 0.) {
+        const double off = cutReg >= 0. ? cutReg : 0.;
+        const double bound = off + cutOvE * energy;
+        if (vali <= bound)
+          pass = true;
+      } else if (vali <= cutReg) {
+        pass = true;
       }
-      if (energy > 0. && (cutOverEEB_ > 0. || cutOverEEE_ > 0. || cutOverE2EB_ > 0. || cutOverE2EE_ > 0.)) {
-        if ((std::abs(EtaSC) < 1.479 && vali / energy <= cutOverEEB_) ||
-            (std::abs(EtaSC) >= 1.479 && vali / energy <= cutOverEEE_)) {
-          n++;
-          filterproduct.addObject(trigger_type, ref);
-          continue;
-        }
-        if ((std::abs(EtaSC) < 1.479 && vali / (energy * energy) <= cutOverE2EB_) ||
-            (std::abs(EtaSC) >= 1.479 && vali / (energy * energy) <= cutOverE2EE_)) {
-          n++;
-          filterproduct.addObject(trigger_type, ref);
-        }
+      if (!pass && energy > 0. && cutOvE2 > 0.) {
+        if (vali / (energy * energy) <= cutOvE2)
+          pass = true;
       }
     } else {
-      if ((std::abs(EtaSC) < 1.479 && vali >= cutRegularEB_) || (std::abs(EtaSC) >= 1.479 && vali >= cutRegularEE_)) {
-        n++;
-        filterproduct.addObject(trigger_type, ref);
-        continue;
+      if (cutOvE > 0.) {
+        const double off = cutReg >= 0. ? cutReg : 0.;
+        const double bound = off + cutOvE * energy;
+        if (vali >= bound)
+          pass = true;
+      } else if (vali >= cutReg) {
+        pass = true;
       }
-      if (energy > 0. && (cutOverEEB_ > 0. || cutOverEEE_ > 0. || cutOverE2EB_ > 0. || cutOverE2EE_ > 0.)) {
-        if ((std::abs(EtaSC) < 1.479 && vali / energy >= cutOverEEB_) ||
-            (std::abs(EtaSC) >= 1.479 && vali / energy >= cutOverEEE_)) {
-          n++;
-          filterproduct.addObject(trigger_type, ref);
-          continue;
-        }
-        if ((std::abs(EtaSC) < 1.479 && vali / (energy * energy) >= cutOverE2EB_) ||
-            (std::abs(EtaSC) >= 1.479 && vali / (energy * energy) >= cutOverE2EE_)) {
-          n++;
-          filterproduct.addObject(trigger_type, ref);
-        }
+      if (!pass && energy > 0. && cutOvE2 > 0.) {
+        if (vali / (energy * energy) >= cutOvE2)
+          pass = true;
       }
+    }
+
+    if (pass) {
+      n++;
+      filterproduct.addObject(trigger_type, ref);
     }
   }
 
