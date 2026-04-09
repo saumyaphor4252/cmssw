@@ -3,10 +3,10 @@ import FWCore.ParameterSet.Config as cms
 hltEgammaHLTExtra = cms.EDProducer("EgammaHLTExtraProducer",
                                    egCands = cms.VPSet(
                                        cms.PSet(
-                                           pixelSeeds = cms.InputTag("hltEgammaElectronPixelSeeds"),
-                                           ecalCands = cms.InputTag("hltEgammaCandidates"),
-                                           gsfTracks = cms.InputTag("hltEgammaGsfTracks"),
-                                           label = cms.string('')
+                                           pixelSeeds = cms.InputTag("hltEgammaElectronPixelSeedsL1Seeded"),
+                                           ecalCands = cms.InputTag("hltEgammaCandidatesL1Seeded"),
+                                           gsfTracks = cms.InputTag("hltEgammaGsfTracksL1Seeded"),
+                                           label = cms.string('L1Seeded')
                                        ),
                                        cms.PSet(
                                            pixelSeeds = cms.InputTag("hltEgammaElectronPixelSeedsUnseeded"),
